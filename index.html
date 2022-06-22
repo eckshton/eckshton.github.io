@@ -457,10 +457,24 @@
             raws.x = Math.ceil((canvas.width / 2) - (raws.w / 2))
             raws.y = Math.ceil(((canvas.height/(raws.c*22))+(raws.c/2))/2)
 
-            if(document.cookie == "") {
+            var cookies = cookieparse()
+            if(cookies == false) {
                 document.cookie = "controls="+JSON.stringify(controls)+";expires=Thu, 01 Jan 3080 00:00:00 UTC; path=/;"
+            } else {
+                controls = cookies.controls
             }
-            console.log(document.cookie)
+        }
+        function cookieparse() {
+            var cookies = document.cookie
+            if(cookies=="") return false
+            var res = cookies.split(';')
+            var realres = {}
+            for(var i = 0; i < res.length; i++) {
+                res[i] = res[i].split('=')
+                res[i][1] = JSON.parse(res[i][1])
+                realres[res[i][0]] = res[i][1]
+            }
+            return realres
         }
         function drawall() {
             drawbg()
