@@ -10,6 +10,17 @@
         var canvas = document.getElementsByTagName("canvas")[0]
         var draw = canvas.getContext("2d")
         var raws = {}
+        var controls = {
+            pause:27,
+            restart:82,
+            left:37,
+            right:39,
+            rleft:90,
+            rright:88,
+            hard:32,
+            soft:40,
+            hold:16
+        }
         var color = {
             'bg':"rgb(3,12,30)",
             'bgalt':"#D4DBFF",
@@ -564,40 +575,39 @@
             cinit()
         })
         window.addEventListener("keydown",function(cual) {
-            if(cual.keyCode==27) {
+            if(cual.keyCode==controls.pause) {
                 game.pause()
             }
-            if(cual.keyCode==82) {
+            if(cual.keyCode==controls.restart) {
                 window.location.reload()
             }
             if(game.paused==true) return
             switch(cual.keyCode) {
-                case 37: {
+                case controls.left: {
                     piece.moveleft()
                     break
                 }
-                case 39: {
+                case controls.right: {
                     piece.moveright()
                     break
                 }
-                case 90: {
+                case controls.rleft: {
                     piece.rotateleft()
                     break
                 }
-                case 38:
-                case 88: {
+                case controls.rright: {
                     piece.rotateright()
                     break
                 }
-                case 32: {
+                case controls.hard: {
                     piece.harddrop()
                     break
                 }
-                case 40: {
+                case controls.soft: {
                     piece.softdrop()
                     break
                 }
-                case 16: {
+                case controls.hold: {
                     game.hold()
                 }
             }
