@@ -1,0 +1,610 @@
+<style>
+    body {
+        margin:0px;
+        background-color: rgb(50,40,60);
+    }
+</style>
+<html>
+    <canvas></canvas>
+    <script>
+        var canvas = document.getElementsByTagName("canvas")[0]
+        var draw = canvas.getContext("2d")
+        var raws = {}
+        var color = {
+            'bg':"rgb(3,12,30)",
+            'bgalt':"#D4DBFF",
+            'board1':"rgb(80,70,90)",
+            'board2':"rgb(90,80,100)",
+            'text':"rgb(255,255,255)",
+            'border':'rgb(100,90,110)',
+            'holdborder':'rgb(0,0,0)',
+            'gridborder':'rgb(255,255,255)',
+            'I':"rgb(153,255,255)",
+            'J':"rgb(153,170,255)",
+            'L':"rgb(255,238,153)",
+            'O':"rgb(255,255,153)",
+            'S':"rgb(153,255,153)",
+            'T':"rgb(255,153,255)",
+            'Z':"rgb(255,153,153)",
+            'G':"rgb(150,150,150)"
+        }
+        var piece = {
+                type:'e',
+                x:0,
+                y:0,
+                r:0,
+                off:[{x:0,y:0},{x:0,y:0},{x:0,y:0},{x:0,y:0}],
+                rotations:{
+                    I:{
+                        0:[{x:-1,y:0},{x:0,y:0},{x:1,y:0},{x:2,y:0}],
+                        1:[{x:1,y:0},{x:1,y:1},{x:1,y:-1},{x:1,y:-2}],
+                        2:[{x:-1,y:-1},{x:0,y:-1},{x:1,y:-1},{x:2,y:-1}],
+                        3:[{x:0,y:0},{x:0,y:1},{x:0,y:-1},{x:0,y:-2}]
+                    },
+                    J:{
+                        0:[{x:-1,y:1},{x:-1,y:0},{x:0,y:0},{x:1,y:0}],
+                        1:[{x:1,y:1},{x:0,y:1},{x:0,y:0},{x:0,y:-1}],
+                        2:[{x:-1,y:0},{x:0,y:0},{x:1,y:0},{x:1,y:-1}],
+                        3:[{x:0,y:1},{x:0,y:0},{x:0,y:-1},{x:-1,y:-1}]
+                    },
+                    L:{
+                        0:[{x:-1,y:0},{x:0,y:0},{x:1,y:0},{x:1,y:1}],
+                        1:[{x:0,y:1},{x:0,y:0},{x:0,y:-1},{x:1,y:-1}],
+                        2:[{x:-1,y:-1},{x:-1,y:0},{x:0,y:0},{x:1,y:0}],
+                        3:[{x:-1,y:1},{x:0,y:1},{x:0,y:0},{x:0,y:-1}]
+                    },
+                    O:{
+                        0:[{x:0,y:1},{x:1,y:1},{x:0,y:0},{x:1,y:0}]
+                    },
+                    S:{
+                        0:[{x:-1,y:0},{x:0,y:0},{x:0,y:1},{x:1,y:1}],
+                        1:[{x:0,y:1},{x:0,y:0},{x:1,y:0},{x:1,y:-1}],
+                        2:[{x:-1,y:-1},{x:0,y:-1},{x:0,y:0},{x:1,y:0}],
+                        3:[{x:-1,y:1},{x:-1,y:0},{x:0,y:0},{x:0,y:-1}]
+                    },
+                    T:{
+                        0:[{x:-1,y:0},{x:0,y:0},{x:0,y:1},{x:1,y:0}],
+                        1:[{x:0,y:1},{x:0,y:0},{x:1,y:0},{x:0,y:-1}],
+                        2:[{x:-1,y:0},{x:0,y:0},{x:1,y:0},{x:0,y:-1}],
+                        3:[{x:-1,y:0},{x:0,y:1},{x:0,y:0},{x:0,y:-1}]
+                    },
+                    Z:{
+                        0:[{x:-1,y:1},{x:0,y:1},{x:0,y:0},{x:1,y:0}],
+                        1:[{x:1,y:1},{x:1,y:0},{x:0,y:0},{x:0,y:-1}],
+                        2:[{x:-1,y:0},{x:0,y:0},{x:0,y:-1},{x:1,y:-1}],
+                        3:[{x:0,y:1},{x:0,y:0},{x:-1,y:0},{x:-1,y:-1}]
+                    }
+                },
+                softdrop:function() {
+                    if(!piece.downcollision()) {
+                        piece.y--
+                        game.score+=1
+                    }
+                },
+                rotateleft:function() {
+                    if(piece.type=='O') return
+                    var testr
+                    if(piece.r==0) {
+                        testr = 3
+                    } else {
+                        testr = piece.r-1
+                    }
+                    if(piece.rotatecolllision(piece.rotations[piece.type][testr],piece.x,piece.y)) {
+                        var newcoords = piece.wallkick(testr)
+                        if(newcoords == false) return
+                        piece.x = piece.x+newcoords.x
+                        piece.y = piece.y+newcoords.y
+                    }
+                    // actual rotation
+                    piece.r=testr
+                    piece.off = piece.rotations[piece.type][piece.r]
+                },
+                wallkick:function(fin) {
+                    testcoords = [{x:0,y:0},{x:0,y:0},{x:0,y:0},{x:0,y:0}]
+                    if(piece.type == 'I') {
+                        switch(piece.r) {
+                            case 0: {
+                                if(fin== 1) {
+                                    testcoords = [{x:-2,y:0},{x:1,y:0},{x:-2,y:-1},{x:1,y:2}]
+                                } else {
+                                    testcoords = [{x:-1,y:0},{x:2,y:0},{x:-1,y:2},{x:2,y:-1}]
+                                }
+                                break
+                            }
+                            case 1: {
+                                if(fin == 0) {
+                                    testcoords = [{x:2,y:0},{x:-1,y:0},{x:2,y:1},{x:-1,y:-2}]
+                                } else {
+                                    testcoords = [{x:-1,y:0},{x:2,y:0},{x:-1,y:2},{x:2,y:-1}]
+                                }
+                                break
+                            }
+                            case 2: {
+                                if(fin == 1) {
+                                    testcoords = [{x:1,y:0},{x:-2,y:0},{x:1,y:-2},{x:-2,y:1}]
+                                } else {
+                                    testcoords = [{x:2,y:0},{x:-1,y:0},{x:2,y:1},{x:-1,y:-2}]
+                                }
+                                break
+                            }
+                            case 3: {
+                                if(fin== 2) {
+                                    testcoords = [{x:-2,y:0},{x:1,y:0},{x:-2,y:-1},{x:1,y:2}]
+                                } else {
+                                    testcoords = [{x:1,y:0},{x:-2,y:0},{x:1,y:-2},{x:-2,y:1}]
+                                }
+                                break
+                            }
+                        }
+                    } else {
+                        switch(piece.r) {
+                            case 0: {
+                                if(fin== 1) {
+                                    testcoords = [{x:-1,y:0},{x:-1,y:1},{x:0,y:-2},{x:-1,y:-2}]
+                                } else {
+                                    testcoords = [{x:1,y:0},{x:1,y:1},{x:0,y:-2},{x:1,y:-2}]
+                                }
+                                break
+                            }
+                            case 1: {
+                                if(fin == 0) {
+                                    testcoords = [{x:1,y:0},{x:1,y:-1},{x:0,y:2},{x:1,y:2}]
+                                } else {
+                                    testcoords = [{x:1,y:0},{x:1,y:-1},{x:0,y:2},{x:1,y:2}]
+                                }
+                                break
+                            }
+                            case 2: {
+                                if(fin == 1) {
+                                    testcoords = [{x:-1,y:0},{x:-1,y:1},{x:0,y:-2},{x:-1,y:-2}]
+                                } else {
+                                    testcoords = [{x:1,y:0},{x:1,y:1},{x:0,y:-2},{x:1,y:-2}]
+                                }
+                                break
+                            }
+                            case 3: {
+                                if(fin== 2) {
+                                    testcoords = [{x:-1,y:0},{x:-1,y:-1},{x:0,y:2},{x:-1,y:2}]
+                                } else {
+                                    testcoords = [{x:-1,y:0},{x:-1,y:-1},{x:0,y:2},{x:-1,y:2}]
+                                }
+                                break
+                            }
+                        }
+                    }
+                    for(var j = 0; j < 4; j++) {
+                        if(!piece.rotatecolllision(piece.rotations[piece.type][fin],piece.x+testcoords[j].x,piece.y+testcoords[j].y)) {
+                            return {x:testcoords[j].x,y:testcoords[j].y}
+                        }
+                    }
+                    return false
+                },
+                rotateright:function() {
+                    if(piece.type=='O') return
+                    // tests
+                    var testr
+                    if(piece.r==3) {
+                        testr = 0
+                    } else {
+                        testr = piece.r+1
+                    }
+                    if(piece.rotatecolllision(piece.rotations[piece.type][testr],piece.x,piece.y)) {
+                        var newcoords = piece.wallkick(testr)
+                        if(newcoords == false) return
+                        piece.x = piece.x+newcoords.x
+                        piece.y = piece.y+newcoords.y
+                    }
+                    // actual rotation
+                    piece.r=testr
+                    piece.off = piece.rotations[piece.type][piece.r]
+                },
+                moveright:function() {
+                    if(!piece.rightcollision()) {
+                        piece.x++
+                    }
+                },
+                moveleft:function() {
+                    if(!piece.leftcollision()) {
+                        piece.x--
+                    }
+                },
+                rotatecolllision(off,x,y) {
+                    for(var i = 0; i < 4; i++) {
+                        if(x+off[i].x < 0 || x+off[i].x > 9) return true
+                        if(y+off[i].y < 0) return true
+                        if(game.board[x+off[i].x][y+off[i].y] != 'e') return true
+                    }
+                    return false
+                },
+                rightcollision:function() {
+                    for(var i = 0; i < 4; i++) {
+                        if(piece.x+piece.off[i].x+1>9) {
+                            return true
+                        }
+                        if(game.board[piece.x+piece.off[i].x+1][piece.y+piece.off[i].y] != 'e') {
+                            return true
+                        }
+                    }
+                    return false
+                },
+                leftcollision:function() {
+                    for(var i = 0; i < 4; i++) {
+                        if(piece.x+piece.off[i].x-1<0) {
+                            return true
+                        }
+                        if(game.board[piece.x+piece.off[i].x-1][piece.y+piece.off[i].y] != 'e') {
+                            return true
+                        }
+                    }
+                    return false
+                },
+                downcollision:function() {
+                    if(piece.y == 0) {
+                        return true
+                    }
+                    for(var i = 0; i < 4; i++) {
+                        if(game.board[piece.x+piece.off[i].x][piece.y+piece.off[i].y-1] != 'e') {
+                            return true
+                        }
+                    }
+                    return false
+                },
+                init:function() {
+                    piece.x = 4
+                    piece.y = 20
+                    piece.r = 0
+                    piece.off = piece.rotations[piece.type][piece.r]
+                },
+                harddrop:function() {
+                    if(piece.calcharddrop()!=undefined) {
+                        game.score += (piece.y-piece.calcharddrop())*2
+                        piece.y = piece.calcharddrop()
+                    }
+                    game.lockdelay={started:true,timeleft:0}
+                },
+                calcharddrop:function() {
+                    for(var y = 0; y < piece.y; y++) {
+                        var works = true
+                        for(var i = 0; i < 4; i++) {
+                            if(y+piece.off[i].y <0) {works=false;break}
+                            if(game.board[piece.x+piece.off[i].x][y+piece.off[i].y] != 'e') {works=false;break}
+                        }
+                        if(works) {
+                            var works2 = true
+                            for(var y2 = y; y2 < piece.y; y2++) {
+                                for(var i = 0; i < 4; i++) {
+                                    if(y2+piece.off[i].y <0) {works2=false;break}
+                                    if(game.board[piece.x+piece.off[i].x][y2+piece.off[i].y] != 'e') {works2=false;break}
+                                }
+                                if(works2 == false) break
+                            }
+                            if(works2 == true) return y
+                        }
+                    }
+                }
+            }
+        var game = {
+            lines:0,
+            score:0,
+            lockdelay:{
+                started:false,
+                timeleft:30
+            },
+            next:'e',
+            held:'e',
+            holdtimeout:false,
+            leveldelay:{
+                level:0,
+                timeleft:0
+            },
+            paused:false,
+            lost:false,
+            levelspeeds:[40,20,10,5,4,3,2,1],
+            queue:[],
+            board:[[],[],[],[],[],[],[],[],[],[]],
+            hold:function() {
+                if(game.holdtimeout==true) return
+                if(game.held!='e') {
+                    var tempheld = game.held
+                    game.held = piece.type
+                    piece.type = tempheld
+                } else {
+                    game.held = piece.type
+                    game.picknext()
+                }
+                game.lockdelay.timeleft=30
+                piece.init()
+                game.holdtimeout=true
+            },
+            lineclear:function() {
+                var lines = 0
+                for(var i = 0; i < 24; i++) {
+                    var count = 0
+                    for(var j = 0; j < 10; j++) {
+                        if(game.board[j][i]!='e') count++
+                    }
+                    if(count==10) {
+                        lines++
+                        for(var j = 0; j < 10; j++) {
+                            game.board[j][i]='e'
+                        }
+                        for(var j = i; j < 23; j++) {
+                            for(var k = 0; k < 10; k++) {
+                                game.board[k][j] = game.board[k][j+1]
+                            }
+                        }
+                        i--
+                    }
+                }
+                game.lines+=lines
+                if(lines==1) {game.score+=40*(game.leveldelay.level+1)}
+                if(lines==2) {game.score+=100*(game.leveldelay.level+1)}
+                if(lines==3) {game.score+=300*(game.leveldelay.level+1)}
+                if(lines==4) {game.score+=1200*(game.leveldelay.level+1)}
+                game.leveldelay.level = Math.floor(game.lines / 10)
+                game.holdtimeout=false
+            },
+            pause:function() {
+                if(game.paused==true) {
+                    game.paused = false
+                } else {
+                    game.paused = true
+                }
+            },
+            timer:function() {
+                if(game.lost == true) return
+                if(game.paused == true) return
+                if(piece.downcollision()) {
+                    if(piece.y==20) {
+                        game.lost=true
+                    }
+                    if(game.lockdelay.started==false) {
+                        game.lockdelay.started=true
+                        game.lockdelay.timeleft=30
+                    }
+                    if(game.lockdelay.timeleft==0) {
+                        for(var i = 0; i < 4; i++) {
+                            game.board[piece.x+piece.off[i].x][piece.y+piece.off[i].y] = piece.type
+                        }
+                        game.lockdelay.timeleft=30
+                        game.lineclear()
+                        game.picknext()
+                        piece.init()
+                    }
+                    game.lockdelay.timeleft--
+                } else {
+                    if(game.leveldelay.timeleft == 0) {
+                        game.lockdelay.started=false
+                        piece.y--
+                        if(game.leveldelay.level > game.levelspeeds.length-1) {
+                            game.leveldelay.timeleft = 0
+                        } else {
+                            game.leveldelay.timeleft = game.levelspeeds[game.leveldelay.level]
+                        }
+                    } else {
+                        game.leveldelay.timeleft--
+                    }
+                }
+            },
+            fillqueue:function () {
+                var bag = ['I','J',"L",'O','S',"T",'Z']
+                for(var i = 0; i < 7; i++) {
+                    var rand = Math.random()
+                    game.queue[i] = bag.splice(Math.round(Math.random()*(bag.length-1)),1)[0]
+                }
+            },
+            picknext:function() {
+                if(game.queue.length == 0) {
+                    game.fillqueue()
+                }
+                if(game.next == 'e') {
+                    game.next = game.queue.splice(0,1)[0]
+                }
+                piece.type = game.next
+                game.next = game.queue.splice(0,1)[0]
+            }
+        }
+        function rdraw(col,x,y,w,h) {
+            draw.fillStyle = color[col]
+            draw.fillRect(x,y,w,h)
+        }
+        function gbdraw(col,x,y) {
+            if(x<0 || x > 9) return
+            if(y<0 || y > 20) return
+            draw.fillStyle = color['border']
+            draw.fillRect(raws.x+(x*raws.c),canvas.height-(canvas.height-raws.y)-((y+1)*raws.c)+raws.h,raws.c,raws.c)
+            draw.fillStyle = color[col]
+            draw.fillRect(raws.x+(x*raws.c)+3,canvas.height-(canvas.height-raws.y)-((y+1)*raws.c)+raws.h+3,raws.c-6,raws.c-6)
+        }
+        function bdraw(col,x,y) {
+            if(x<0 || x > 9) return
+            if(y<0 || y > 20) return
+            draw.fillStyle = color[col]
+            draw.fillRect(raws.x+(x*raws.c),canvas.height-(canvas.height-raws.y)-((y+1)*raws.c)+raws.h,raws.c,raws.c)
+        }
+        function abdraw(col,x,y) {
+            draw.fillStyle = color[col]
+            draw.fillRect(raws.x+(x*raws.c),raws.y+(y*raws.c),raws.c,raws.c)
+        }
+        function ginit() {
+            for(var i = 0; i < 10; i++) { // board init
+                for(var j = 0; j < 24; j++) {
+                    game.board[i][j] = 'e'
+                }
+            }
+            game.picknext()
+            piece.init()
+        }
+        function cinit() {
+            canvas.width = window.innerWidth
+            canvas.height = window.innerHeight
+            canvas.style.width = window.innerWidth
+            canvas.style.height = window.innerHeight
+            raws.c = Math.ceil(canvas.height / 22)
+            raws.w = raws.c*10
+            raws.h = raws.c*21
+            raws.x = Math.ceil((canvas.width / 2) - (raws.w / 2))
+            raws.y = Math.ceil(((canvas.height/(raws.c*22))+(raws.c/2))/2)
+        }
+        function drawall() {
+            drawbg()
+            
+            drawui()
+            if(game.paused==true) {
+                pausefx()
+                return
+            }
+            drawboard()
+            nextheld()
+            drawghost()
+            drawpiece()
+        }
+        function drawbg() {
+            rdraw('bg',0,0,canvas.width,canvas.height)
+            rdraw('gridborder',raws.x-5,raws.y-5,raws.w+10,raws.h+10)
+            rdraw('board1',raws.x,raws.y,raws.w,raws.h)
+            for(var i = 0; i < 5; i++) {
+                for(var j = 0; j < 11; j++) {
+                    rdraw('board2',raws.x+(raws.c*(i*2)),raws.y+(raws.c*(j*2)),raws.c,raws.c)
+                }
+            }
+            for(var i = 0; i < 5; i++) {
+                for(var j = 0; j < 10; j++) {
+                    rdraw('board2',raws.x+raws.c+(raws.c*(i*2)),raws.y+raws.c+(raws.c*(j*2)),raws.c,raws.c)
+                }
+            }
+        }
+        function drawboard() {
+            for(var x = 0; x < 10; x++) {
+                for(var y = 0; y < 21; y++) {
+                        if(game.board[x][y]=='e') continue
+                        gbdraw(game.board[x][y],x,y)
+                    }
+            }
+        }
+        function drawpiece() {
+            for(var i = 0; i < 4; i++) {
+                gbdraw(piece.type,piece.x+piece.off[i].x,piece.y+piece.off[i].y)
+            }
+        }
+        function drawghost() {
+            for(var i = 0; i < 4; i++) {
+                if(piece.calcharddrop()==undefined) return
+                bdraw('G',piece.x+piece.off[i].x,piece.calcharddrop()+piece.off[i].y)
+            }
+        }
+        function drawui() {
+            draw.font = "30px Segoe UI Emoji"
+            draw.fillStyle = color.text
+            draw.fillText(game.score,raws.x-(raws.c*5)+5,raws.y+30,250)
+
+            rdraw('gridborder',raws.x-(raws.c*5),raws.y+raws.c,raws.c*5,raws.c*3)
+            rdraw('gridborder',raws.x+raws.w,raws.y+raws.c,raws.c*5,raws.c*3)
+            rdraw('bgalt',raws.x-(raws.c*5)+5,raws.y+raws.c+5,raws.c*5-10,raws.c*3-10)
+            rdraw('bgalt',raws.x+raws.w+5,raws.y+raws.c+5,raws.c*5-10,raws.c*3-10)
+
+            draw.fillStyle = color.text
+            draw.fillText("Level: " + game.leveldelay.level,raws.x-(raws.c*5)+5,raws.y+30+(raws.c*4),250)
+            draw.fillText("Lines: " + game.lines,raws.x-(raws.c*5)+5,raws.y+30+(raws.c*5),250)
+        }
+        function nextheld() {
+            var xoff = 2
+            var yoff = 2.5
+            var rot = 2
+            if(game.next == 'I') {xoff = 1.5; yoff = 3}
+            if(game.next == 'O') {rot = 0; xoff = 1.5; yoff = 1.5}
+            for(var i = 0; i < 4; i++) {
+                rdraw('holdborder',raws.x+raws.w+Math.floor(raws.c*xoff)+(raws.c*piece.rotations[game.next][rot][i].x)-4,raws.y+Math.floor(raws.c*yoff)+(raws.c*piece.rotations[game.next][rot][i].y)-4,raws.c+8,raws.c+8)
+            }
+            for(var i = 0; i < 4; i++) {
+                rdraw(game.next,raws.x+raws.w+Math.floor(raws.c*xoff)+(raws.c*piece.rotations[game.next][rot][i].x),raws.y+Math.floor(raws.c*yoff)+(raws.c*piece.rotations[game.next][rot][i].y),raws.c,raws.c)
+            }
+            if(game.held=='e') return
+            xoff = 3
+            yoff = 2.5
+            rot = 2
+            if(game.held == 'I') {xoff = 2.5; yoff = 3}
+            if(game.held == 'O') {rot = 0; xoff = 2.5; yoff = 1.5}
+            for(var i = 0; i < 4; i++) {
+                rdraw('holdborder',raws.x-Math.floor(raws.c*xoff)-(raws.c*piece.rotations[game.held][rot][i].x)-4,raws.y+Math.floor(raws.c*yoff)+(raws.c*piece.rotations[game.held][rot][i].y)-4,raws.c+8,raws.c+8)
+            }
+            for(var i = 0; i < 4; i++) {
+                rdraw(game.held,raws.x-Math.floor(raws.c*xoff)-(raws.c*piece.rotations[game.held][rot][i].x),raws.y+Math.floor(raws.c*yoff)+(raws.c*piece.rotations[game.held][rot][i].y),raws.c,raws.c)
+            }
+        }
+        function pausefx() {
+            var bag = ['I','J',"L",'O','S',"T",'Z']
+            var curpiece = bag[Math.floor(Math.random()*6)]
+            for(var i = 0; i < 4; i++) {
+                bdraw('G',4+piece.rotations[curpiece][0][i].x,piece.rotations[curpiece][0][i].y)
+            }
+            for(var i = 0; i < 4; i++) {
+                bdraw(curpiece,4+piece.rotations[curpiece][0][i].x,19+piece.rotations[curpiece][0][i].y)
+            }
+            var xoff = 2
+            var yoff = 2.5
+            var rot = 2
+            if(curpiece == 'I') {xoff = 1.5; yoff = 3}
+            if(curpiece == 'O') {rot = 0; xoff = 1.5; yoff = 1.5}
+            for(var i = 0; i < 4; i++) {
+                rdraw(curpiece,raws.x+raws.w+Math.floor(raws.c*xoff)+(raws.c*piece.rotations[curpiece][rot][i].x),raws.y+Math.floor(raws.c*yoff)+(raws.c*piece.rotations[curpiece][rot][i].y),raws.c,raws.c)
+            }
+            xoff = 3
+            yoff = 2.5
+            rot = 2
+            if(curpiece == 'I') {xoff = 2.5; yoff = 3}
+            if(curpiece == 'O') {rot = 0; xoff = 2.5; yoff = 1.5}
+            for(var i = 0; i < 4; i++) {
+                rdraw(curpiece,raws.x-Math.floor(raws.c*xoff)-(raws.c*piece.rotations[curpiece][rot][i].x),raws.y+Math.floor(raws.c*yoff)+(raws.c*piece.rotations[curpiece][rot][i].y),raws.c,raws.c)
+            }
+        }
+        ginit()
+        cinit()
+        window.addEventListener("resize", function() {
+            cinit()
+        })
+        window.addEventListener("keydown",function(cual) {
+            if(cual.keyCode==27) {
+                game.pause()
+            }
+            if(cual.keyCode==82) {
+                window.location.reload()
+            }
+            if(game.paused==true) return
+            switch(cual.keyCode) {
+                case 37: {
+                    piece.moveleft()
+                    break
+                }
+                case 39: {
+                    piece.moveright()
+                    break
+                }
+                case 90: {
+                    piece.rotateleft()
+                    break
+                }
+                case 38:
+                case 88: {
+                    piece.rotateright()
+                    break
+                }
+                case 32: {
+                    piece.harddrop()
+                    break
+                }
+                case 40: {
+                    piece.softdrop()
+                    break
+                }
+                case 16: {
+                    game.hold()
+                }
+            }
+        })
+        var timer = setInterval(function() {
+            drawall()
+            game.timer()
+        },1000/60)
+    </script>
+</html>
