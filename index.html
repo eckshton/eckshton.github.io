@@ -32,7 +32,7 @@
             'gridborder':'rgb(255,255,255)',
             'I':"rgb(153,255,255)",
             'J':"rgb(153,170,255)",
-            'L':"rgb(255,238,153)",
+            'L':"rgb(255,204,114)",
             'O':"rgb(255,255,153)",
             'S':"rgb(153,255,153)",
             'T':"rgb(255,153,255)",
@@ -456,6 +456,11 @@
             raws.h = raws.c*21
             raws.x = Math.ceil((canvas.width / 2) - (raws.w / 2))
             raws.y = Math.ceil(((canvas.height/(raws.c*22))+(raws.c/2))/2)
+
+            if(document.cookie == "") {
+                document.cookie = "controls="+JSON.stringify(controls)+";expires=Thu, 01 Jan 3080 00:00:00 UTC; path=/;"
+            }
+            console.log(document.cookie)
         }
         function drawall() {
             drawbg()
