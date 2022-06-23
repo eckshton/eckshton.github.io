@@ -34,17 +34,7 @@
             }
             return realres
         }
-        var controls = {
-            "pause":"Escape",
-            "restart":"r",
-            "left":"ArrowLeft",
-            "right":"ArrowRight",
-            "rleft":"z",
-            "rright":"x",
-            "hard":"Space",
-            "soft":"ArrowDown",
-            "hold":"ShiftLeft"
-        }
+        var controls = {"pause":"Escape","restart":"KeyR","left":"ArrowLeft","right":"ArrowRight","rleft":"KeyZ","rright":"KeyX","hard":"Space","soft":"ArrowDown","hold":"ShiftLeft"}
         var cookies = cookieparse()
         if(cookies != false) {
             controls = cookies.controls
