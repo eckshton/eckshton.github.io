@@ -1,0 +1,56 @@
+<html>
+    <style>
+        body {
+            background-color: rgb(41, 22, 54);
+            color:white;
+        }
+    </style>
+    <body>
+        <table>
+            <thead>
+                <tr>
+                    <td>
+                        action
+                    </td>
+                    <td>
+                        key
+                    </td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    
+                </tr>
+            </tbody>
+        </table>
+    </body>
+    <script>
+        function cookieparse() {
+            var cookies = document.cookie
+            if(cookies=="") return false
+            var res = cookies.split(';')
+            var realres = {}
+            for(var i = 0; i < res.length; i++) {
+                res[i] = res[i].split('=')
+                res[i][1] = JSON.parse(res[i][1])
+                realres[res[i][0]] = res[i][1]
+            }
+            return realres
+        }
+        var controls = {
+            pause:'Escape',
+            restart:'r',
+            left:'ArrowLeft',
+            right:'ArrowRight',
+            rleft:'z',
+            rright:'x',
+            hard:'Space',
+            soft:'ArrowDown',
+            hold:'ShiftLeft'
+        }
+        var cookies = cookieparse()
+        if(cookies == "") {
+            controls = cookies.controls
+        }
+    </script>
+</html>

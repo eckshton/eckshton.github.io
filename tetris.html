@@ -11,15 +11,15 @@
         var draw = canvas.getContext("2d")
         var raws = {}
         var controls = {
-            pause:27,
-            restart:82,
-            left:37,
-            right:39,
-            rleft:90,
-            rright:88,
-            hard:32,
-            soft:40,
-            hold:16
+            pause:'Escape',
+            restart:'r',
+            left:'ArrowLeft',
+            right:'ArrowRight',
+            rleft:'z',
+            rright:'x',
+            hard:'Space',
+            soft:'ArrowDown',
+            hold:'ShiftLeft'
         }
         var color = {
             'bg':"rgb(3,12,30)",
@@ -594,14 +594,14 @@
             cinit()
         })
         window.addEventListener("keydown",function(cual) {
-            if(cual.keyCode==controls.pause) {
+            if(cual.code==controls.pause) {
                 game.pause()
             }
-            if(cual.keyCode==controls.restart) {
+            if(cual.code==controls.restart) {
                 window.location.reload()
             }
             if(game.paused==true) return
-            switch(cual.keyCode) {
+            switch(cual.code) {
                 case controls.left: {
                     piece.moveleft()
                     break
