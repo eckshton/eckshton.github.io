@@ -516,7 +516,6 @@
         function drawui() {
             draw.font = "30px Segoe UI Emoji"
             draw.fillStyle = color.text
-            draw.fillText(game.score,raws.x-(raws.c*5)+5,raws.y+30,250)
 
             rdraw('gridborder',raws.x-(raws.c*5),raws.y+raws.c,raws.c*5,raws.c*3)
             rdraw('gridborder',raws.x+raws.w,raws.y+raws.c,raws.c*5,raws.c*3)
@@ -526,6 +525,7 @@
             draw.fillStyle = color.text
             draw.fillText("Level: " + game.leveldelay.level,raws.x-(raws.c*5)+5,raws.y+30+(raws.c*4),250)
             draw.fillText("Lines: " + game.lines,raws.x-(raws.c*5)+5,raws.y+30+(raws.c*5),250)
+            draw.fillText("Score: " + game.score,raws.x-(raws.c*5)+5,raws.y+30+(raws.c*10),250)
         }
         function nextheld() {
             var xoff = 2
