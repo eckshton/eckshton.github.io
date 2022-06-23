@@ -525,7 +525,8 @@
             draw.fillStyle = color.text
             draw.fillText("Level: " + game.leveldelay.level,raws.x-(raws.c*5)+5,raws.y+30+(raws.c*4),250)
             draw.fillText("Lines: " + game.lines,raws.x-(raws.c*5)+5,raws.y+30+(raws.c*5),250)
-            draw.fillText("Score: " + game.score,raws.x-(raws.c*5)+5,raws.y+30+(raws.c*12),250)
+            draw.fillText("Score",raws.x-(raws.c*5)+5,raws.y+30+(raws.c*11),250)
+            draw.fillText(game.score,raws.x-(raws.c*5)+5,raws.y+30+(raws.c*12),250)
         }
         function nextheld() {
             var xoff = 2
