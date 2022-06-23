@@ -18,9 +18,6 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    
-                </tr>
             </tbody>
         </table>
     </body>
@@ -38,19 +35,46 @@
             return realres
         }
         var controls = {
-            pause:'Escape',
-            restart:'r',
-            left:'ArrowLeft',
-            right:'ArrowRight',
-            rleft:'z',
-            rright:'x',
-            hard:'Space',
-            soft:'ArrowDown',
-            hold:'ShiftLeft'
+            "pause":"Escape",
+            "restart":"r",
+            "left":"ArrowLeft",
+            "right":"ArrowRight",
+            "rleft":"z",
+            "rright":"x",
+            "hard":"Space",
+            "soft":"ArrowDown",
+            "hold":"ShiftLeft"
         }
         var cookies = cookieparse()
         if(cookies == "") {
             controls = cookies.controls
+        }
+        for(var i = 0; i < 9; i++) {
+            var listar = Object.getOwnPropertyNames(controls)
+            var row = document.createElement('tr')
+            var td1 = document.createElement('td')
+            td1.innerHTML = listar[i]
+            var td2 = document.createElement('td')
+            var input = document.createElement('input')
+            input.value = controls[listar[i]]
+            input.addEventListener('keydown',function(key) {
+                if(key.key=="" || key.key==" ") {document.activeElement.value = key.code} else {
+                    document.activeElement.value = key.key
+                }
+                controls[document.activeElement.parentElement.previousElementSibling.innerHTML] = key.code
+                document.cookie = "controls="+JSON.stringify(controls)+";expires=Thu, 01 Jan 3080 00:00:00 UTC; path=/;"
+            })
+            input.addEventListener('keyup',function(key) {
+                if(key.key=="" || key.key==" ") {document.activeElement.value = key.code} else {
+                    document.activeElement.value = key.key
+                }
+                controls[document.activeElement.parentElement.previousElementSibling.innerHTML] = key.code
+                document.cookie = "controls="+JSON.stringify(controls)+";expires=Thu, 01 Jan 3080 00:00:00 UTC; path=/;"
+            })
+            td2.appendChild(input)
+            row.appendChild(td1)
+            row.appendChild(td2)
+            document.getElementsByTagName('tbody')[0].appendChild(row)
         }
     </script>
 </html>
