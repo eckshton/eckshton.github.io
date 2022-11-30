@@ -27,7 +27,8 @@
             'S':"rgb(153,255,153)",
             'T':"rgb(255,153,255)",
             'Z':"rgb(255,153,153)",
-            'G':"rgb(150,150,150)"
+            'G':"rgb(150,150,150)",
+            'red':"rgb(255,0,0)"
         }
         var piece = {
                 type:'e',
@@ -251,10 +252,20 @@
                     return false
                 },
                 init:function() {
-                    piece.x = 4
-                    piece.y = 20
                     piece.r = 0
+                    piece.x = 4
                     piece.off = piece.rotations[piece.type][piece.r]
+                    piece.off.forEach(val => {
+                        if(piece.y+val.y<20) {
+                            piece.y=20-val.y
+                        }
+                    })
+                    for(var i = 0; i < 4; i++) {
+                        if(game.board[piece.x+piece.off[i].x][piece.y+piece.off[i].y]!='e') {
+                            game.lost=true
+                            break
+                        }
+                    }
                 },
                 harddrop:function() {
                     if(piece.calcharddrop()!=undefined) {
@@ -356,9 +367,6 @@
                 if(game.lost == true) return
                 if(game.paused == true) return
                 if(piece.downcollision()) {
-                    if(piece.y==20) {
-                        game.lost=true
-                    }
                     if(game.lockdelay.started==false) {
                         game.lockdelay.started=true
                         game.lockdelay.timeleft=30
@@ -427,6 +435,12 @@
             draw.fillStyle = color[col]
             draw.fillRect(raws.x+(x*raws.c),raws.y+(y*raws.c),raws.c,raws.c)
         }
+        function bbdraw(col,x,y) {
+            draw.fillStyle = color['border']
+            draw.fillRect(raws.x+(x*raws.c),canvas.height-(canvas.height-raws.y)-((y+1)*raws.c)+raws.h,raws.c,raws.c)
+            draw.fillStyle = color[col]
+            draw.fillRect(raws.x+(x*raws.c)+3,canvas.height-(canvas.height-raws.y)-((y+1)*raws.c)+raws.h+3,raws.c-6,raws.c-6)
+        }
         function ginit() {
             for(var i = 0; i < 10; i++) { // board init
                 for(var j = 0; j < 24; j++) {
@@ -477,7 +491,13 @@
             drawboard()
             nextheld()
             drawghost()
-            drawpiece()
+            if(game.lost) {
+                for(var i = 0; i < 4; i++) {
+                    bbdraw('red',piece.x+piece.off[i].x,piece.y+piece.off[i].y)
+                }
+            } else {
+                drawpiece()
+            }
         }
         function drawbg() {
             rdraw('bg',0,0,canvas.width,canvas.height)
